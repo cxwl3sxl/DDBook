@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows.Forms;
 
@@ -11,6 +12,7 @@ namespace DDBook
         private int _curX, _curY, _lastX, _lastY;
         private bool _isMouseDown;
         private readonly Pen _pen;
+        private Rectangle _lastDrawRectangle;
 
         public MyPictureBox()
         {
@@ -30,7 +32,11 @@ namespace DDBook
             if (!_isMouseDown) return;
             _lastX = e.X;
             _lastY = e.Y;
-            Invalidate();
+
+            if (_lastDrawRectangle != Rectangle.Empty) Invalidate(_lastDrawRectangle);
+            var x = _curX < _lastX ? _curX : _lastX;
+            var y = _curY < _lastY ? _curY : _lastY;
+            Invalidate(new Rectangle(x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY)));
         }
 
         private void MyPictureBox_MouseDown(object sender, MouseEventArgs e)
@@ -59,18 +65,25 @@ namespace DDBook
         {
             if (_picFile == null) return;
             if (!File.Exists(_picFile)) return;
-            using var g = pe.Graphics;
+            var gtx = BufferedGraphicsManager.Current;
+            var buffer = gtx.Allocate(pe.Graphics, new Rectangle(0, 0, Width, Height));
+            using var g = buffer.Graphics;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;//高质量低速度呈现
+            g.SmoothingMode = SmoothingMode.HighQuality;// 指定高质量、低速度呈现。
             g.Clear(Color.DarkCyan);
-            using var image = System.Drawing.Image.FromFile(_picFile);
+            using var image = Image.FromFile(_picFile);
             g.DrawImage(image, new Point(0, 0));
 
             if (_isMouseDown)
             {
                 var x = _curX < _lastX ? _curX : _lastX;
                 var y = _curY < _lastY ? _curY : _lastY;
-
-                g.DrawRectangle(_pen, x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY));
+                _lastDrawRectangle = new Rectangle(x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY));
+                g.DrawRectangle(_pen, _lastDrawRectangle);
             }
+
+            buffer.Render(pe.Graphics);
+            buffer.Dispose();
         }
     }
 }
