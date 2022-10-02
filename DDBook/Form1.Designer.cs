@@ -28,31 +28,24 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.lbResult = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.btnPrePage = new System.Windows.Forms.Button();
-            this.btnNextPage = new System.Windows.Forms.Button();
-            this.btnNewRect = new System.Windows.Forms.Button();
-            this.btnPlay = new System.Windows.Forms.Button();
-            this.btnSaveRect = new System.Windows.Forms.Button();
+            this.lbPageInfo = new System.Windows.Forms.Label();
             this.lbMessage = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.btnSaveRect = new System.Windows.Forms.Button();
+            this.btnPlay = new System.Windows.Forms.Button();
+            this.btnNewRect = new System.Windows.Forms.Button();
+            this.btnNextPage = new System.Windows.Forms.Button();
+            this.btnPrePage = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox1.Location = new System.Drawing.Point(3, 17);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(649, 590);
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
             // 
             // lbResult
             // 
@@ -68,13 +61,30 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.pictureBox1);
+            this.groupBox1.Controls.Add(this.panel1);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(655, 610);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "当前页";
+            // 
+            // panel1
+            // 
+            this.panel1.AutoScroll = true;
+            this.panel1.Controls.Add(this.myPictureBox1);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(3, 17);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(649, 590);
+            this.panel1.TabIndex = 1;
+            // 
+            // myPictureBox1
+            // 
+            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
+            this.myPictureBox1.Name = "myPictureBox1";
+            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
+            this.myPictureBox1.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -91,6 +101,7 @@
             // groupBox3
             // 
             this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Controls.Add(this.lbPageInfo);
             this.groupBox3.Controls.Add(this.lbMessage);
             this.groupBox3.Controls.Add(this.btnSaveRect);
             this.groupBox3.Controls.Add(this.btnPlay);
@@ -104,41 +115,23 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "控制区";
             // 
-            // btnPrePage
+            // lbPageInfo
             // 
-            this.btnPrePage.Location = new System.Drawing.Point(6, 92);
-            this.btnPrePage.Name = "btnPrePage";
-            this.btnPrePage.Size = new System.Drawing.Size(75, 23);
-            this.btnPrePage.TabIndex = 1;
-            this.btnPrePage.Text = "上一页";
-            this.btnPrePage.UseVisualStyleBackColor = true;
+            this.lbPageInfo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbPageInfo.Location = new System.Drawing.Point(6, 86);
+            this.lbPageInfo.Name = "lbPageInfo";
+            this.lbPageInfo.Size = new System.Drawing.Size(300, 23);
+            this.lbPageInfo.TabIndex = 7;
+            this.lbPageInfo.Text = "共计N/A页，当前N/A页";
+            this.lbPageInfo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // btnNextPage
+            // lbMessage
             // 
-            this.btnNextPage.Location = new System.Drawing.Point(87, 92);
-            this.btnNextPage.Name = "btnNextPage";
-            this.btnNextPage.Size = new System.Drawing.Size(75, 23);
-            this.btnNextPage.TabIndex = 2;
-            this.btnNextPage.Text = "下一页";
-            this.btnNextPage.UseVisualStyleBackColor = true;
-            // 
-            // btnNewRect
-            // 
-            this.btnNewRect.Location = new System.Drawing.Point(6, 121);
-            this.btnNewRect.Name = "btnNewRect";
-            this.btnNewRect.Size = new System.Drawing.Size(75, 23);
-            this.btnNewRect.TabIndex = 3;
-            this.btnNewRect.Text = "新区";
-            this.btnNewRect.UseVisualStyleBackColor = true;
-            // 
-            // btnPlay
-            // 
-            this.btnPlay.Location = new System.Drawing.Point(87, 121);
-            this.btnPlay.Name = "btnPlay";
-            this.btnPlay.Size = new System.Drawing.Size(75, 23);
-            this.btnPlay.TabIndex = 4;
-            this.btnPlay.Text = "播放";
-            this.btnPlay.UseVisualStyleBackColor = true;
+            this.lbMessage.Location = new System.Drawing.Point(6, 17);
+            this.lbMessage.Name = "lbMessage";
+            this.lbMessage.Size = new System.Drawing.Size(462, 23);
+            this.lbMessage.TabIndex = 6;
+            this.lbMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnSaveRect
             // 
@@ -149,13 +142,43 @@
             this.btnSaveRect.Text = "保存读区";
             this.btnSaveRect.UseVisualStyleBackColor = true;
             // 
-            // lbMessage
+            // btnPlay
             // 
-            this.lbMessage.Location = new System.Drawing.Point(6, 17);
-            this.lbMessage.Name = "lbMessage";
-            this.lbMessage.Size = new System.Drawing.Size(462, 23);
-            this.lbMessage.TabIndex = 6;
-            this.lbMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnPlay.Location = new System.Drawing.Point(87, 121);
+            this.btnPlay.Name = "btnPlay";
+            this.btnPlay.Size = new System.Drawing.Size(75, 23);
+            this.btnPlay.TabIndex = 4;
+            this.btnPlay.Text = "播放";
+            this.btnPlay.UseVisualStyleBackColor = true;
+            // 
+            // btnNewRect
+            // 
+            this.btnNewRect.Location = new System.Drawing.Point(6, 121);
+            this.btnNewRect.Name = "btnNewRect";
+            this.btnNewRect.Size = new System.Drawing.Size(75, 23);
+            this.btnNewRect.TabIndex = 3;
+            this.btnNewRect.Text = "新区";
+            this.btnNewRect.UseVisualStyleBackColor = true;
+            // 
+            // btnNextPage
+            // 
+            this.btnNextPage.Location = new System.Drawing.Point(393, 86);
+            this.btnNextPage.Name = "btnNextPage";
+            this.btnNextPage.Size = new System.Drawing.Size(75, 23);
+            this.btnNextPage.TabIndex = 2;
+            this.btnNextPage.Text = "下一页";
+            this.btnNextPage.UseVisualStyleBackColor = true;
+            this.btnNextPage.Click += new System.EventHandler(this.btnNextPage_Click);
+            // 
+            // btnPrePage
+            // 
+            this.btnPrePage.Location = new System.Drawing.Point(312, 86);
+            this.btnPrePage.Name = "btnPrePage";
+            this.btnPrePage.Size = new System.Drawing.Size(75, 23);
+            this.btnPrePage.TabIndex = 1;
+            this.btnPrePage.Text = "上一页";
+            this.btnPrePage.UseVisualStyleBackColor = true;
+            this.btnPrePage.Click += new System.EventHandler(this.btnPrePage_Click);
             // 
             // Form1
             // 
@@ -168,10 +191,11 @@
             this.Controls.Add(this.groupBox1);
             this.Name = "Form1";
             this.Text = "点读通教材制作工具";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.groupBox1.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -179,8 +203,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label lbResult;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -191,6 +213,9 @@
         private System.Windows.Forms.Button btnSaveRect;
         private System.Windows.Forms.Button btnPlay;
         private System.Windows.Forms.Label lbMessage;
+        private System.Windows.Forms.Label lbPageInfo;
+        private System.Windows.Forms.Panel panel1;
+        private MyPictureBox myPictureBox1;
     }
 }
 
