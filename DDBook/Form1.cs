@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DDBook.EdgeTTS;
+using NAudio.Wave;
 using Newtonsoft.Json;
 using PdfiumViewer;
 
@@ -14,6 +16,10 @@ namespace DDBook
     {
         private Project _currentProject;
         private string _projFile;
+        private readonly EdgeTTS.EdgeTTS _tts = new EdgeTTS.EdgeTTS();
+        private Voice _choosedVoice;
+        private readonly WaveOutEvent _wo = new WaveOutEvent();
+        private AudioFileReader _audioFileReader;
 
         public Form1()
         {
@@ -21,17 +27,34 @@ namespace DDBook
             myPictureBox1.OnMessage += ShowInfo;
             myPictureBox1.OnOcr += MyPictureBox1_OnOcr;
             myPictureBox1.OnResult += MyPictureBox1_OnResult;
+            _wo.PlaybackStopped += _wo_PlaybackStopped;
+        }
+
+        #region 事件处理
+
+        private void _wo_PlaybackStopped(object sender, StoppedEventArgs e)
+        {
+            Invoke(new Action(() =>
+            {
+                _audioFileReader?.Close();
+                _audioFileReader?.Dispose();
+                btnStop.Enabled = false;
+            }));
         }
 
         private void MyPictureBox1_OnResult(string obj)
         {
             tbOcrResult.Text = obj;
+            btnPlay.Enabled = !string.IsNullOrWhiteSpace(obj);
+            ShowSuccess("识别完成");
         }
 
         private void MyPictureBox1_OnOcr(string obj)
         {
             pbOcr.ImageLocation = obj;
         }
+
+        #endregion
 
         #region 打开项目
 
@@ -58,6 +81,8 @@ namespace DDBook
             _currentProject.Total = total;
 
             ShowCurrentPage();
+
+            gbControl.Enabled = true;
         }
 
         void ShowCurrentPage()
@@ -261,6 +286,8 @@ namespace DDBook
             {
                 File.WriteAllText(_projFile, JsonConvert.SerializeObject(_currentProject));
             }
+
+            _tts.Dispose();
         }
 
         #endregion
@@ -283,5 +310,112 @@ namespace DDBook
 
 
         #endregion
+
+        #region 播放和停止
+
+        private async void btnPlay_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                btnPlay.Enabled = false;
+                var data = await _tts.SynthesisAsync(tbOcrResult.Text, ShowInfo, _choosedVoice.ShortName);
+                if (data?.Code == ResultCode.Success)
+                {
+                    var mp3 = myPictureBox1.SaveMp3(data.Data);
+                    _audioFileReader = new AudioFileReader(mp3);
+                    _wo.Init(_audioFileReader);
+                    btnStop.Enabled = true;
+                    _wo.Play();
+                }
+                else
+                {
+                    ShowError(data?.Message ?? "未知错误，请重试");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                btnPlay.Enabled = true;
+            }
+        }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            _wo.Stop();
+        }
+
+        #endregion
+
+        #region TTS设置
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            var voices = _tts.GetVoiceList();
+            if (voices == null) return;
+            foreach (var voice in voices)
+            {
+                if (voice.Locale == "en-GB" || voice.Locale == "en-US")
+                {
+                    cbVoiceList.Items.Add(voice);
+                }
+            }
+
+            cbVoiceList.SelectedItem =
+                _choosedVoice = voices.FirstOrDefault(a => a.ShortName == "en-US-MichelleNeural");
+        }
+
+        private void cbVoiceList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _choosedVoice = cbVoiceList.SelectedItem as Voice;
+        }
+
+        #endregion
+
+        #region 区块操作
+
+        private void btnNewRect_Click(object sender, EventArgs e)
+        {
+            myPictureBox1.NewBlock();
+            ShowInfo("可以在图片上绘制新点读区了");
+        }
+
+        private void btnSaveRect_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                myPictureBox1.SaveBlock();
+                ShowSuccess("点读区域保存成功");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            myPictureBox1.DeleteBlock();
+            ShowInfo("点读区域已经删除");
+        }
+
+        private void btnSavePage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                myPictureBox1.SavePage();
+                ShowInfo("保存页成功");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+        }
+
+        #endregion
+
+
     }
 }

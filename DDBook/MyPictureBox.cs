@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace DDBook
@@ -16,11 +18,13 @@ namespace DDBook
         private readonly Pen _pen;
         private Rectangle _lastDrawRectangle;
         private float _systemDpiX, _systemDpiY;
-
+        private readonly List<DDBlock> _blocks = new List<DDBlock>();
+        private string _lastMp3;
+        private bool _pageSaved = false;
 
         public event Action<string> OnMessage;
         public event Action<string> OnOcr;
-        public event Action<string> OnResult; 
+        public event Action<string> OnResult;
 
         #region 构造函数
 
@@ -67,6 +71,9 @@ namespace DDBook
 
         public bool LoadDir(string dir)
         {
+            SavePage();
+
+            _pageSaved = false;
             _picFile = Path.Combine(dir, "pic.jpg");
             if (!File.Exists(_picFile)) return false;
             _pageDir = dir;
@@ -77,6 +84,20 @@ namespace DDBook
             using var image = Image.FromFile(_picFile);
             Width = (int)(image.Width * _systemDpiX / image.HorizontalResolution);
             Height = (int)(image.Height * _systemDpiY / image.VerticalResolution);
+
+            _blocks.Clear();
+            var xyFile = Path.Combine(dir, "XY.txt");
+            if (File.Exists(xyFile))
+            {
+                var sr = new StreamReader(xyFile);
+                string line;
+                do
+                {
+                    line = sr.ReadLine();
+                } while (!string.IsNullOrWhiteSpace(line));
+                sr.Close();
+                sr.Dispose();
+            }
 
             Invalidate();
 
@@ -100,6 +121,11 @@ namespace DDBook
             using var image = Image.FromFile(_picFile);
             g.DrawImage(image, new Point(0, 0));
 
+            foreach (var block in _blocks)
+            {
+                g.DrawRectangle(_pen, block.Rectangle);
+            }
+
             if (_isMouseDown)
             {
                 var x = _curX < _lastX ? _curX : _lastX;
@@ -114,6 +140,8 @@ namespace DDBook
 
         #endregion
 
+        #region 截图OCR
+
         async void ScreenShotAndOcr()
         {
             if (_lastDrawRectangle == Rectangle.Empty) return;
@@ -121,10 +149,6 @@ namespace DDBook
             using var img = new Bitmap(_lastDrawRectangle.Width, _lastDrawRectangle.Height);
             using var g = Graphics.FromImage(img);
             using var image = Image.FromFile(_picFile);
-            /*
-             *    Width = (int)(image.Width * currentGraphics.DpiX / image.HorizontalResolution);
-            Height = (int)(image.Height * currentGraphics.DpiY / image.VerticalResolution);
-             */
             var srcRectangle = new Rectangle(
                 (int)(_lastDrawRectangle.X * image.HorizontalResolution / _systemDpiX),
                 (int)(_lastDrawRectangle.Y * image.VerticalResolution / _systemDpiY),
@@ -141,5 +165,107 @@ namespace DDBook
             var result = await PpOcr.Detect(ocrImage);
             OnResult?.Invoke(result);
         }
+
+        #endregion
+
+        #region 保存当前区块对应的MP3
+
+        public string SaveMp3(MemoryStream dataData)
+        {
+            _lastMp3 = Path.Combine(_pageDir, $"{Guid.NewGuid()}.mp3");
+            using var fs = File.Create(_lastMp3);
+            dataData.WriteTo(fs);
+            fs.Close();
+            return _lastMp3;
+        }
+
+        #endregion
+
+        #region 区块操作
+
+        public void NewBlock()
+        {
+            _lastMp3 = null;
+            _lastDrawRectangle = Rectangle.Empty;
+        }
+
+        public void SaveBlock()
+        {
+            if (_lastDrawRectangle == Rectangle.Empty) return;
+            if (string.IsNullOrWhiteSpace(_lastMp3)) throw new Exception("尚未合成录音，无法保存！");
+            if (!File.Exists(_lastMp3)) throw new Exception("尚未合成录音，无法保存！");
+            var lx = _lastDrawRectangle.X * 1.0f / Width;
+            var ly = _lastDrawRectangle.Y * 1.0f / Height;
+            var rx = (_lastDrawRectangle.X + _lastDrawRectangle.Width) * 1.0f / Width;
+            var ry = (_lastDrawRectangle.Y + _lastDrawRectangle.Height) * 1.0f / Height;
+            _blocks.Add(new DDBlock()
+            {
+                Mp3 = _lastMp3,
+                Rectangle = _lastDrawRectangle,
+                LeftTop = new DDPoint()
+                {
+                    X = lx,
+                    Y = ly
+                },
+                RightTop = new DDPoint()
+                {
+                    X = rx,
+                    Y = ry
+                }
+            });
+            _lastDrawRectangle = Rectangle.Empty;
+        }
+
+        public void DeleteBlock()
+        {
+            _lastMp3 = null;
+            _lastDrawRectangle = Rectangle.Empty;
+        }
+
+        public void SavePage()
+        {
+            if (_pageSaved) return;
+            if (_pageDir == null) return;
+            if (!Directory.Exists(_pageDir)) return;
+            SaveBlock();
+            var sb = new StringBuilder();
+            var index = 1;
+            foreach (var block in _blocks)
+            {
+                sb.AppendLine(
+                    $"#{block.Rectangle.X},{block.Rectangle.Y},{block.Rectangle.Width},{block.Rectangle.Height}");
+                sb.AppendLine($"{block.LeftTop.X},{block.LeftTop.Y},{block.RightTop.X},{block.RightTop.Y}");
+                var targetMp3 = Path.Combine(Path.GetDirectoryName(block.Mp3)!, $"{index}.mp3");
+                if (File.Exists(targetMp3)) File.Delete(targetMp3);
+                File.Move(block.Mp3, targetMp3);
+                block.Mp3 = targetMp3;
+                index++;
+            }
+
+            File.WriteAllText(Path.Combine(_pageDir, "XY.txt"), sb.ToString());
+            _pageSaved = true;
+        }
+
+        #endregion
+
+    }
+
+    class DDBlock
+    {
+        public DDPoint LeftTop { get; set; }
+
+        public DDPoint RightTop { get; set; }
+
+        public Rectangle Rectangle { get; set; }
+
+        public string Mp3 { get; set; }
+    }
+
+    class DDPoint
+    {
+
+        public float X { get; set; }
+
+        public float Y { get; set; }
     }
 }
