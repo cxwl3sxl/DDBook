@@ -18,8 +18,16 @@ namespace DDBook
         public Form1()
         {
             InitializeComponent();
+            myPictureBox1.OnMessage += ShowInfo;
+            myPictureBox1.OnOcr += MyPictureBox1_OnOcr;
         }
-        
+
+        private void MyPictureBox1_OnOcr(string obj)
+        {
+            pbOcr.ImageLocation = obj;
+        }
+
+        #region 打开项目
 
         async void ProcessProj(Project project)
         {
@@ -61,6 +69,7 @@ namespace DDBook
             btnNextPage.Enabled = _currentProject.CurrentProcessPage < _currentProject.Total - 1;
         }
 
+        #endregion
 
         #region 拖拽打开项目或新建项目
 

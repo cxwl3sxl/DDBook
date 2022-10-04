@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lbResult = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.myPictureBox1 = new DDBook.MyPictureBox();
@@ -41,20 +40,19 @@
             this.btnNewRect = new System.Windows.Forms.Button();
             this.btnNextPage = new System.Windows.Forms.Button();
             this.btnPrePage = new System.Windows.Forms.Button();
+            this.pbOcr = new System.Windows.Forms.PictureBox();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.tbOcrResult = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbOcr)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // lbResult
-            // 
-            this.lbResult.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lbResult.Location = new System.Drawing.Point(3, 17);
-            this.lbResult.Name = "lbResult";
-            this.lbResult.Size = new System.Drawing.Size(468, 431);
-            this.lbResult.TabIndex = 1;
-            this.lbResult.Text = "label1";
             // 
             // groupBox1
             // 
@@ -90,7 +88,7 @@
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox2.Controls.Add(this.lbResult);
+            this.groupBox2.Controls.Add(this.splitContainer1);
             this.groupBox2.Location = new System.Drawing.Point(673, 12);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(474, 451);
@@ -180,6 +178,43 @@
             this.btnPrePage.UseVisualStyleBackColor = true;
             this.btnPrePage.Click += new System.EventHandler(this.btnPrePage_Click);
             // 
+            // pbOcr
+            // 
+            this.pbOcr.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pbOcr.Location = new System.Drawing.Point(0, 0);
+            this.pbOcr.Name = "pbOcr";
+            this.pbOcr.Size = new System.Drawing.Size(468, 215);
+            this.pbOcr.TabIndex = 0;
+            this.pbOcr.TabStop = false;
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(3, 17);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.pbOcr);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.tbOcrResult);
+            this.splitContainer1.Size = new System.Drawing.Size(468, 431);
+            this.splitContainer1.SplitterDistance = 215;
+            this.splitContainer1.TabIndex = 2;
+            // 
+            // tbOcrResult
+            // 
+            this.tbOcrResult.AcceptsReturn = true;
+            this.tbOcrResult.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tbOcrResult.Location = new System.Drawing.Point(0, 0);
+            this.tbOcrResult.Multiline = true;
+            this.tbOcrResult.Name = "tbOcrResult";
+            this.tbOcrResult.Size = new System.Drawing.Size(468, 212);
+            this.tbOcrResult.TabIndex = 0;
+            // 
             // Form1
             // 
             this.AllowDrop = true;
@@ -198,12 +233,17 @@
             this.panel1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pbOcr)).EndInit();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.Label lbResult;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox3;
@@ -216,6 +256,9 @@
         private System.Windows.Forms.Label lbPageInfo;
         private System.Windows.Forms.Panel panel1;
         private MyPictureBox myPictureBox1;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.PictureBox pbOcr;
+        private System.Windows.Forms.TextBox tbOcrResult;
     }
 }
 

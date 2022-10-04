@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
 
@@ -9,10 +10,18 @@ namespace DDBook
     internal class MyPictureBox : Panel
     {
         private string _picFile;
+        private string _pageDir;
         private int _curX, _curY, _lastX, _lastY;
         private bool _isMouseDown;
         private readonly Pen _pen;
         private Rectangle _lastDrawRectangle;
+        private float _systemDpiX, _systemDpiY;
+
+
+        public event Action<string> OnMessage;
+        public event Action<string> OnOcr;
+
+        #region 构造函数
 
         public MyPictureBox()
         {
@@ -22,9 +31,14 @@ namespace DDBook
             MouseUp += MyPictureBox_MouseUp;
         }
 
+        #endregion
+
+        #region 鼠标选取区域
+
         private void MyPictureBox_MouseUp(object sender, MouseEventArgs e)
         {
             _isMouseDown = false;
+            ScreenShotAndOcr();
         }
 
         private void MyPictureBox_MouseMove(object sender, MouseEventArgs e)
@@ -46,20 +60,31 @@ namespace DDBook
             _isMouseDown = true;
         }
 
+        #endregion
+
+        #region 加载点读页
+
         public bool LoadDir(string dir)
         {
             _picFile = Path.Combine(dir, "pic.jpg");
             if (!File.Exists(_picFile)) return false;
+            _pageDir = dir;
 
             var currentGraphics = Graphics.FromHwnd(FindForm()!.Handle);
+            _systemDpiX = currentGraphics.DpiX;
+            _systemDpiY = currentGraphics.DpiY;
             using var image = Image.FromFile(_picFile);
-            Width = (int)(image.Width * currentGraphics.DpiX / image.HorizontalResolution);
-            Height = (int)(image.Height * currentGraphics.DpiY / image.VerticalResolution);
+            Width = (int)(image.Width * _systemDpiX / image.HorizontalResolution);
+            Height = (int)(image.Height * _systemDpiY / image.VerticalResolution);
 
             Invalidate();
 
             return true;
         }
+
+        #endregion
+
+        #region 界面绘制
 
         protected override void OnPaint(PaintEventArgs pe)
         {
@@ -68,8 +93,8 @@ namespace DDBook
             var gtx = BufferedGraphicsManager.Current;
             var buffer = gtx.Allocate(pe.Graphics, new Rectangle(0, 0, Width, Height));
             using var g = buffer.Graphics;
-            g.PixelOffsetMode = PixelOffsetMode.HighQuality;//高质量低速度呈现
-            g.SmoothingMode = SmoothingMode.HighQuality;// 指定高质量、低速度呈现。
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality; //高质量低速度呈现
+            g.SmoothingMode = SmoothingMode.HighQuality; // 指定高质量、低速度呈现。
             g.Clear(Color.DarkCyan);
             using var image = Image.FromFile(_picFile);
             g.DrawImage(image, new Point(0, 0));
@@ -84,6 +109,34 @@ namespace DDBook
 
             buffer.Render(pe.Graphics);
             buffer.Dispose();
+        }
+
+        #endregion
+
+        async void ScreenShotAndOcr()
+        {
+            if (_lastDrawRectangle == Rectangle.Empty) return;
+            OnMessage?.Invoke("正在处理...");
+            using var img = new Bitmap(_lastDrawRectangle.Width, _lastDrawRectangle.Height);
+            using var g = Graphics.FromImage(img);
+            using var image = Image.FromFile(_picFile);
+            /*
+             *    Width = (int)(image.Width * currentGraphics.DpiX / image.HorizontalResolution);
+            Height = (int)(image.Height * currentGraphics.DpiY / image.VerticalResolution);
+             */
+            var srcRectangle = new Rectangle(
+                (int)(_lastDrawRectangle.X * image.HorizontalResolution / _systemDpiX),
+                (int)(_lastDrawRectangle.Y * image.VerticalResolution / _systemDpiY),
+                (int)(_lastDrawRectangle.Width * image.HorizontalResolution / _systemDpiX),
+                (int)(_lastDrawRectangle.Height * image.VerticalResolution / _systemDpiY));
+            g.DrawImage(image,
+                new Rectangle(0, 0, _lastDrawRectangle.Width, _lastDrawRectangle.Height),
+                srcRectangle,
+                GraphicsUnit.Pixel);
+            var ocrImage = Path.Combine(_pageDir, "tmp.jpg");
+            img.Save(ocrImage, ImageFormat.Jpeg);
+            OnMessage?.Invoke("正在识别...");
+            OnOcr?.Invoke(ocrImage);
         }
     }
 }
