@@ -20,6 +20,7 @@ namespace DDBook
 
         public event Action<string> OnMessage;
         public event Action<string> OnOcr;
+        public event Action<string> OnResult; 
 
         #region 构造函数
 
@@ -137,6 +138,8 @@ namespace DDBook
             img.Save(ocrImage, ImageFormat.Jpeg);
             OnMessage?.Invoke("正在识别...");
             OnOcr?.Invoke(ocrImage);
+            var result = await PpOcr.Detect(ocrImage);
+            OnResult?.Invoke(result);
         }
     }
 }

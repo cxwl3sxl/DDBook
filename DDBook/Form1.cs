@@ -20,6 +20,12 @@ namespace DDBook
             InitializeComponent();
             myPictureBox1.OnMessage += ShowInfo;
             myPictureBox1.OnOcr += MyPictureBox1_OnOcr;
+            myPictureBox1.OnResult += MyPictureBox1_OnResult;
+        }
+
+        private void MyPictureBox1_OnResult(string obj)
+        {
+            tbOcrResult.Text = obj;
         }
 
         private void MyPictureBox1_OnOcr(string obj)
