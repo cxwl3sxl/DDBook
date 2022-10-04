@@ -175,31 +175,27 @@ namespace DDBook
         {
             return Task.Run(() =>
             {
-                using (var document = PdfDocument.Load(pdf))
+                using var document = PdfDocument.Load(pdf);
+                var pageCount = document.PageCount;
+                for (var i = 0; i < pageCount; i++)
                 {
-                    var pageCount = document.PageCount;
-                    for (var i = 0; i < pageCount; i++)
-                    {
-                        var targetPic = Path.Combine(workingDir, $"{i + 1}", "pic.jpg");
-                        if (File.Exists(targetPic)) continue;
+                    var targetPic = Path.Combine(workingDir, $"{i + 1}", "pic.jpg");
+                    if (File.Exists(targetPic)) continue;
 
-                        var dir = Path.GetDirectoryName(targetPic);
-                        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    var dir = Path.GetDirectoryName(targetPic);
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
-                        var dpi = 300;
-                        using (var image = document.Render(i, dpi, dpi, PdfRenderFlags.CorrectFromDpi))
-                        {
-                            var encoder = ImageCodecInfo.GetImageEncoders()
-                                .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
-                            var encParams = new EncoderParameters(1);
-                            encParams.Param[0] = new EncoderParameter(Encoder.Quality, 10L);
+                    var dpi = 300;
+                    using var image = document.Render(i, dpi, dpi, PdfRenderFlags.CorrectFromDpi);
+                    var encoder = ImageCodecInfo.GetImageEncoders()
+                        .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
+                    var encParams = new EncoderParameters(1);
+                    encParams.Param[0] = new EncoderParameter(Encoder.Quality, 10L);
 
-                            image.Save(targetPic, encoder, encParams);
-                        }
-                    }
-
-                    return pageCount;
+                    image.Save(targetPic, encoder, encParams);
                 }
+
+                return pageCount;
             });
         }
 
@@ -272,20 +268,5 @@ namespace DDBook
 
 
         #endregion
-
-        private void pbPage_MouseDown(object sender, MouseEventArgs e)
-        {
-
-        }
-
-        private void pbPage_MouseMove(object sender, MouseEventArgs e)
-        {
-
-        }
-
-        private void pbPage_MouseUp(object sender, MouseEventArgs e)
-        {
-
-        }
     }
 }
