@@ -30,7 +30,6 @@
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pbOcr = new System.Windows.Forms.PictureBox();
@@ -53,6 +52,7 @@
             this.lbMessage = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
+            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -87,13 +87,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(649, 594);
             this.panel1.TabIndex = 1;
-            // 
-            // myPictureBox1
-            // 
-            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
-            this.myPictureBox1.Name = "myPictureBox1";
-            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
-            this.myPictureBox1.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -273,7 +266,7 @@
             this.btnPlay.Name = "btnPlay";
             this.btnPlay.Size = new System.Drawing.Size(75, 23);
             this.btnPlay.TabIndex = 4;
-            this.btnPlay.Text = "播放";
+            this.btnPlay.Text = "播放并保存";
             this.btnPlay.UseVisualStyleBackColor = true;
             this.btnPlay.Click += new System.EventHandler(this.btnPlay_Click);
             // 
@@ -327,6 +320,13 @@
             this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
             this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.toolStripProgressBar1.Visible = false;
+            // 
+            // myPictureBox1
+            // 
+            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
+            this.myPictureBox1.Name = "myPictureBox1";
+            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
+            this.myPictureBox1.TabIndex = 0;
             // 
             // Form1
             // 

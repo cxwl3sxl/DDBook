@@ -20,10 +20,12 @@ namespace DDBook
         private readonly PageInfo _pageInfo = new PageInfo();
         private DdBlock _currentBlock;
         private bool _pageSaved;
+        private int _mouseDownAt;
 
         public event Action<string> OnMessage;
         public event Action<string> OnOcr;
         public event Action<string> OnResult;
+        public event Action<string> OnPlayRequest; 
 
         #region 构造函数
 
@@ -42,7 +44,26 @@ namespace DDBook
         private void MyPictureBox_MouseUp(object sender, MouseEventArgs e)
         {
             _isMouseDown = false;
-            ScreenShotAndOcr();
+            var clickDownTime = Environment.TickCount - _mouseDownAt;
+            if (clickDownTime < 1000)
+            {
+                //一秒以内
+                var clickInBlock = _pageInfo.Blocks.FirstOrDefault(a => IsInRectangle(e.X, e.Y, a.Rectangle));
+                if (clickInBlock == null) return;
+                _currentBlock = clickInBlock;
+                OnPlayRequest?.Invoke(Path.Combine(_pageDir, $"{clickInBlock.Id}.mp3"));
+            }
+            else
+            {
+                ScreenShotAndOcr();
+            }
+        }
+
+        bool IsInRectangle(int x, int y, Rectangle rectangle)
+        {
+            var isInX = x >= rectangle.X && x <= (rectangle.Width + rectangle.X);
+            var isInY = y >= rectangle.Y && y <= (rectangle.Height + rectangle.Y);
+            return isInY && isInX;
         }
 
         private void MyPictureBox_MouseMove(object sender, MouseEventArgs e)
@@ -60,6 +81,7 @@ namespace DDBook
 
         private void MyPictureBox_MouseDown(object sender, MouseEventArgs e)
         {
+            _mouseDownAt = Environment.TickCount;
             _curX = e.X;
             _curY = e.Y;
             _isMouseDown = true;
@@ -71,8 +93,6 @@ namespace DDBook
 
         public bool LoadDir(string dir)
         {
-            SavePage();
-
             _pageSaved = false;
             _picFile = Path.Combine(dir, "pic.jpg");
             if (!File.Exists(_picFile)) return false;
@@ -208,12 +228,30 @@ namespace DDBook
             if (!File.Exists(Path.Combine(_pageDir, $"{_currentBlock.Id}.mp3"))) throw new Exception("尚未合成录音，无法保存！");
         }
 
-        public void DeleteBlock()
+        public bool DeleteBlock()
         {
-            if (_currentBlock == null) return;
+            if (_currentBlock == null) return false;
             var target = _pageInfo.Blocks.FirstOrDefault(a => a.Id == _currentBlock.Id);
-            if (target == null) return;
+            if (target == null) return false;
+
+            if (_currentBlock.Rectangle != Rectangle.Empty)
+            {
+                if (MessageBox.Show("确定要删除当前点读区域么？", "询问", MessageBoxButtons.YesNo) != DialogResult.Yes) return false;
+            }
+
             _pageInfo.Blocks.Remove(target);
+
+            var mp3 = Path.Combine(_pageDir, $"{target.Id}.mp3");
+            if (File.Exists(mp3)) File.Delete(mp3);
+
+            if (_currentBlock.Rectangle != Rectangle.Empty)
+            {
+                Invalidate();
+            }
+
+            NewBlock();
+
+            return true;
         }
 
         public void SavePage()
@@ -222,20 +260,7 @@ namespace DDBook
             if (_pageDir == null) return;
             if (!Directory.Exists(_pageDir)) return;
             SaveBlock();
-            //var sb = new StringBuilder();
-            //var index = 1;
-            //sb.AppendLine("#");
-            //foreach (var block in _pageInfo.Blocks)
-            //{
-            //    var lx = block.Rectangle.X * 1.0f / Width;
-            //    var ly = block.Rectangle.Y * 1.0f / Height;
-            //    var rx = (block.Rectangle.X + block.Rectangle.Width) * 1.0f / Width;
-            //    var ry = (block.Rectangle.Y + block.Rectangle.Height) * 1.0f / Height;
 
-            //    sb.AppendLine(
-            //        $"{FormatPoint(lx)},{FormatPoint(ly)},{FormatPoint(rx)},{FormatPoint(ry)}");
-            //    index++;
-            //}
             var emptyBlocks = _pageInfo.Blocks.Where(a => a.Rectangle == Rectangle.Empty).ToArray();
             foreach (var block in emptyBlocks)
             {
@@ -245,11 +270,6 @@ namespace DDBook
             File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(_pageInfo));
             _pageSaved = true;
         }
-
-        //string FormatPoint(float point)
-        //{
-        //    return $".{$"{point:F3}".Split('.')[1]}";
-        //}
 
         #endregion
 

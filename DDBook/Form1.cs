@@ -31,7 +31,21 @@ namespace DDBook
             myPictureBox1.OnMessage += ShowInfo;
             myPictureBox1.OnOcr += MyPictureBox1_OnOcr;
             myPictureBox1.OnResult += MyPictureBox1_OnResult;
+            myPictureBox1.OnPlayRequest += MyPictureBox1_OnPlayRequest;
             _wo.PlaybackStopped += _wo_PlaybackStopped;
+        }
+
+        private void MyPictureBox1_OnPlayRequest(string obj)
+        {
+            if (string.IsNullOrWhiteSpace(obj)) return;
+            if (!File.Exists(obj)) return;
+            _audioFileReader?.Close();
+            _audioFileReader?.Dispose();
+            _audioFileReader = new AudioFileReader(obj);
+            _wo.Stop();
+            _wo.Init(_audioFileReader);
+            btnStop.Enabled = true;
+            _wo.Play();
         }
 
         #region 事件处理
@@ -102,6 +116,17 @@ namespace DDBook
         void ShowCurrentPage()
         {
             var pageDir = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.CurrentProcessPage + 1}");
+            try
+            {
+                ShowInfo("正在保存当前页...");
+                myPictureBox1.SavePage();
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+                return;
+            }
+
             if (!myPictureBox1.LoadDir(pageDir))
             {
                 ShowError("页面文件不存在！！！");
@@ -353,10 +378,17 @@ namespace DDBook
                 {
                     var mp3 = myPictureBox1.SaveMp3(data.Data);
                     if (string.IsNullOrWhiteSpace(mp3)) return;
+                    _audioFileReader?.Close();
+                    _audioFileReader?.Dispose();
+                    _wo.Stop();
                     _audioFileReader = new AudioFileReader(mp3);
                     _wo.Init(_audioFileReader);
                     btnStop.Enabled = true;
                     _wo.Play();
+
+                    myPictureBox1.SaveBlock();
+                    myPictureBox1.NewBlock();
+                    ShowSuccess("点读取保存成功");
                 }
                 else
                 {
@@ -424,8 +456,17 @@ namespace DDBook
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            myPictureBox1.DeleteBlock();
-            ShowInfo("点读区域已经删除");
+            try
+            {
+                if (myPictureBox1.DeleteBlock())
+                {
+                    ShowInfo("点读区域已经删除");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
         }
 
         private void btnSavePage_Click(object sender, EventArgs e)
