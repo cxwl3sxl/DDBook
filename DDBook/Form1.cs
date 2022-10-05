@@ -414,6 +414,33 @@ namespace DDBook
             }
         }
 
+
+        #endregion
+
+        #region 课本相关
+
+        private void btnSetAsCover_Click(object sender, EventArgs e)
+        {
+            var pic = myPictureBox1.GetPic();
+            if (string.IsNullOrWhiteSpace(pic))
+            {
+                ShowError("当前没有选中任何图片！");
+                return;
+            }
+
+            var myBook = Path.Combine(_currentProject.WorkingDir, "MyBook.jpg");
+            if (File.Exists(myBook)) File.Delete(myBook);
+
+            File.Copy(pic, myBook);
+
+            ShowSuccess("封面设置成功！");
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+
+        }
+
         #endregion
 
 

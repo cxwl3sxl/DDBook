@@ -355,7 +355,7 @@ namespace DDBook.EdgeTTS
                     webSocket.Dispose();
                 }
                 //tokenSource.Cancel();
-                ConnectionKeeper.Dispose();
+                ConnectionKeeper?.Dispose();
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器
                 // TODO: 将大型字段设置为 null
                 disposedValue = true;

@@ -104,6 +104,11 @@ namespace DDBook
             return true;
         }
 
+        public string GetPic()
+        {
+            return _picFile;
+        }
+
         #endregion
 
         #region 界面绘制
