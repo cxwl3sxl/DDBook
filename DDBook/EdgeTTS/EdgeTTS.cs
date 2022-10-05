@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -23,17 +21,17 @@ namespace DDBook.EdgeTTS
 
         public bool KeepConnection;
 
-        private ClientWebSocket webSocket = new ClientWebSocket();
+        private ClientWebSocket _webSocket = new ClientWebSocket();
 
-        public WebSocketState WebSocketState => webSocket.State;
+        public WebSocketState WebSocketState => _webSocket.State;
 
         SemaphoreSlim slimlock = new SemaphoreSlim(1, 1);
 
-        private bool disposedValue;
+        private bool _disposedValue;
 
         private Timer ConnectionKeeper;
 
-        private const string TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
+        private const string TrustedClientToken = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
 
         public EdgeTTS(bool keepConnection = true, bool useConnectionKeeper = false, int keepAliveInterval = 1000)
         {
@@ -52,19 +50,17 @@ namespace DDBook.EdgeTTS
 #endif
             try
             {
-                switch (webSocket.State)
+                switch (_webSocket.State)
                 {
                     case WebSocketState.Closed:
-                        webSocket.Abort();
-                        webSocket.Dispose();
-                        webSocket = new ClientWebSocket();
+                        _webSocket.Abort();
+                        _webSocket.Dispose();
+                        _webSocket = new ClientWebSocket();
                         EstablishConnectionAsync(CancellationToken.None).Wait();
                         break;
                     case WebSocketState.Aborted:
-                        webSocket = new ClientWebSocket();
+                        _webSocket = new ClientWebSocket();
                         EstablishConnectionAsync(CancellationToken.None).Wait();
-                        break;
-                    default:
                         break;
                 }
             }
@@ -84,7 +80,7 @@ namespace DDBook.EdgeTTS
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var options = webSocket.Options;
+            var options = _webSocket.Options;
             options.SetRequestHeader("Pragma", "no-cache");
             options.SetRequestHeader("Accept-Encoding", "gzip, deflate, br");
             options.SetRequestHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
@@ -93,8 +89,8 @@ namespace DDBook.EdgeTTS
             //毫无卵用的参数
             //options.KeepAliveInterval = TimeSpan.FromSeconds(5);
             var host = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1";
-            await webSocket.ConnectAsync(
-                new Uri($"{host}?TrustedClientToken={TRUSTED_CLIENT_TOKEN}&ConnectionId={Utils.GetUUID()}"), token);
+            await _webSocket.ConnectAsync(
+                new Uri($"{host}?TrustedClientToken={TrustedClientToken}&ConnectionId={Utils.GetUUID()}"), token);
             //await webSocket.ConnectAsync(new Uri($"ws://speech.est.institute/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken={TRUSTED_CLIENT_TOKEN}&ConnectionId={Helpers.GetUUID()}"), CancellationToken.None);
             //stopwatch.Stop();
             Trace.WriteLine($"EstablishConnection Time={stopwatch.Elapsed.TotalMilliseconds}ms");
@@ -111,7 +107,7 @@ namespace DDBook.EdgeTTS
                        "\"false\"" + ",\"wordBoundaryEnabled\":" + "\"false\"" + "}," +
                        "\"outputFormat\":\"audio-24khz-48kbitrate-mono-mp3\"}}}}\r\n";
             //var s = new WsItem() { message = message, SSMLPayload = new SSML(str, voice, pitch, rate, volume) };
-            var SSMLPayload = new SSML(str, voice, pitch, rate, volume);
+            var ssmlPayload = new SSML(str, voice, pitch, rate, volume);
             var retryTimes = 0;
             await slimlock.WaitAsync();
             while (retryTimes < 3)
@@ -123,7 +119,7 @@ namespace DDBook.EdgeTTS
                     log?.Invoke($"开始TTS转换...");
                     var token = CancellationToken.None;
 
-                    switch (webSocket.State)
+                    switch (_webSocket.State)
                     {
                         //Steal Fox's Code
                         case WebSocketState.None:
@@ -136,24 +132,22 @@ namespace DDBook.EdgeTTS
                         case WebSocketState.CloseSent:
                         case WebSocketState.CloseReceived:
                         case WebSocketState.Closed:
-                            webSocket.Abort();
-                            webSocket.Dispose();
-                            webSocket = new ClientWebSocket();
+                            _webSocket.Abort();
+                            _webSocket.Dispose();
+                            _webSocket = new ClientWebSocket();
                             await EstablishConnectionAsync(token);
                             break;
                         case WebSocketState.Aborted:
-                            webSocket.Dispose();
-                            webSocket = new ClientWebSocket();
+                            _webSocket.Dispose();
+                            _webSocket = new ClientWebSocket();
                             await EstablishConnectionAsync(token);
-                            break;
-                        default:
                             break;
                     }
 
-                    var audio = ReceiveAudioAsync(webSocket, SSMLPayload.RequestID, token);
-                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(message)),
+                    var audio = ReceiveAudioAsync(_webSocket, ssmlPayload.RequestID, token);
+                    await _webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(message)),
                         WebSocketMessageType.Text, true, token);
-                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(SSMLPayload.ToString())),
+                    await _webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(ssmlPayload.ToString())),
                         WebSocketMessageType.Text, true, token);
                     while (!audio.IsCompleted)
                     {
@@ -167,9 +161,9 @@ namespace DDBook.EdgeTTS
 
                     if (!KeepConnection)
                     {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "NormalClosure", token);
-                        webSocket.Abort();
-                        webSocket.Dispose();
+                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "NormalClosure", token);
+                        _webSocket.Abort();
+                        _webSocket.Dispose();
                     }
 
                     slimlock.Release();
@@ -323,7 +317,7 @@ namespace DDBook.EdgeTTS
         public Voice[] GetVoiceList()
         {
             var req = WebRequest.CreateHttp(
-                $"https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken={TRUSTED_CLIENT_TOKEN}");
+                $"https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken={TrustedClientToken}");
             req.Method = "GET";
             req.Headers.Add("Authority", "speech.platform.bing.com");
             req.Headers.Add("Sec-CH-UA",
@@ -347,18 +341,18 @@ namespace DDBook.EdgeTTS
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
-                    webSocket.Abort();
-                    webSocket.Dispose();
+                    _webSocket.Abort();
+                    _webSocket.Dispose();
                 }
                 //tokenSource.Cancel();
                 ConnectionKeeper?.Dispose();
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器
                 // TODO: 将大型字段设置为 null
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
