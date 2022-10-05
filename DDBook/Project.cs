@@ -11,5 +11,7 @@
         public int CurrentProcessPage { get; set; }
 
         public string BookName { get; set; }
+
+        public int CoverImgPage { get; set; }
     }
 }

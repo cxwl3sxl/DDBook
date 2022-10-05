@@ -457,10 +457,7 @@ namespace DDBook
                 return;
             }
 
-            var myBook = Path.Combine(_currentProject.WorkingDir, "MyBook.jpg");
-            if (File.Exists(myBook)) File.Delete(myBook);
-
-            File.Copy(img, myBook);
+            _currentProject.CoverImgPage = _currentProject.CurrentProcessPage;
 
             ShowSuccess("封面设置成功！");
         }
@@ -481,10 +478,11 @@ namespace DDBook
 
                 using var zip = new ZipOutputStream(File.Create(Path.Combine(_currentProject.WorkingDir,
                     $"{_currentProject.BookName}.ddt")));
-                var bookCover = Path.Combine(_currentProject.WorkingDir, "MyBook.jpg");
+                var bookCover = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.CoverImgPage}", "pic.jpg");
                 var newBookCover = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.BookName}.jpg");
                 if (File.Exists(bookCover))
                 {
+                    if (File.Exists(newBookCover)) File.Delete(newBookCover);
                     File.Move(bookCover, newBookCover);
                 }
 
