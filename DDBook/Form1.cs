@@ -232,6 +232,7 @@ namespace DDBook
                 var pageCount = document.PageCount;
                 for (var i = 0; i < pageCount; i++)
                 {
+                    ShowInfo($"正在生成页面数据[第{i + 1}页]，请稍后...");
                     var targetPic = Path.Combine(workingDir, $"{i + 1}", "pic.jpg");
                     if (File.Exists(targetPic)) continue;
 

@@ -30,7 +30,6 @@
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pbOcr = new System.Windows.Forms.PictureBox();
@@ -54,6 +53,7 @@
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.label1 = new System.Windows.Forms.Label();
             this.tbBookName = new System.Windows.Forms.TextBox();
+            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -88,13 +88,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(649, 594);
             this.panel1.TabIndex = 1;
-            // 
-            // myPictureBox1
-            // 
-            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
-            this.myPictureBox1.Name = "myPictureBox1";
-            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
-            this.myPictureBox1.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -313,13 +306,15 @@
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(868, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(837, 17);
             this.toolStripStatusLabel1.Spring = true;
             // 
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
             this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
+            this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.toolStripProgressBar1.Visible = false;
             // 
             // label1
             // 
@@ -337,6 +332,13 @@
             this.tbBookName.Size = new System.Drawing.Size(228, 21);
             this.tbBookName.TabIndex = 15;
             this.tbBookName.TextChanged += new System.EventHandler(this.tbBookName_TextChanged);
+            // 
+            // myPictureBox1
+            // 
+            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
+            this.myPictureBox1.Name = "myPictureBox1";
+            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
+            this.myPictureBox1.TabIndex = 0;
             // 
             // Form1
             // 

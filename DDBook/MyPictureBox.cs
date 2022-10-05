@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace DDBook
 {
@@ -20,7 +21,7 @@ namespace DDBook
         private float _systemDpiX, _systemDpiY;
         private readonly List<DDBlock> _blocks = new List<DDBlock>();
         private string _lastMp3;
-        private bool _pageSaved = false;
+        private bool _pageSaved;
 
         public event Action<string> OnMessage;
         public event Action<string> OnOcr;
@@ -86,17 +87,14 @@ namespace DDBook
             Height = (int)(image.Height * _systemDpiY / image.VerticalResolution);
 
             _blocks.Clear();
-            var xyFile = Path.Combine(dir, "XY.txt");
+            var xyFile = Path.Combine(dir, "XY.json");
             if (File.Exists(xyFile))
             {
-                var sr = new StreamReader(xyFile);
-                string line;
-                do
+                var blocks = JsonConvert.DeserializeObject<DDBlock[]>(File.ReadAllText(xyFile));
+                if (blocks != null)
                 {
-                    line = sr.ReadLine();
-                } while (!string.IsNullOrWhiteSpace(line));
-                sr.Close();
-                sr.Dispose();
+                    _blocks.AddRange(blocks);
+                }
             }
 
             Invalidate();
@@ -235,11 +233,11 @@ namespace DDBook
             SaveBlock();
             var sb = new StringBuilder();
             var index = 1;
+            sb.AppendLine("#");
             foreach (var block in _blocks)
             {
                 sb.AppendLine(
-                    $"#{block.Rectangle.X},{block.Rectangle.Y},{block.Rectangle.Width},{block.Rectangle.Height}");
-                sb.AppendLine($"{block.LeftTop.X},{block.LeftTop.Y},{block.RightTop.X},{block.RightTop.Y}");
+                    $"{FormatPoint(block.LeftTop.X)},{FormatPoint(block.LeftTop.Y)},{FormatPoint(block.RightTop.X)},{FormatPoint(block.RightTop.Y)}");
                 var targetMp3 = Path.Combine(Path.GetDirectoryName(block.Mp3)!, $"{index}.mp3");
                 if (File.Exists(targetMp3)) File.Delete(targetMp3);
                 File.Move(block.Mp3, targetMp3);
@@ -248,29 +246,16 @@ namespace DDBook
             }
 
             File.WriteAllText(Path.Combine(_pageDir, "XY.txt"), sb.ToString());
+            File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(_blocks));
             _pageSaved = true;
+        }
+
+        string FormatPoint(float point)
+        {
+            return $".{$"{point:F3}".Split('.')[1]}";
         }
 
         #endregion
 
-    }
-
-    class DDBlock
-    {
-        public DDPoint LeftTop { get; set; }
-
-        public DDPoint RightTop { get; set; }
-
-        public Rectangle Rectangle { get; set; }
-
-        public string Mp3 { get; set; }
-    }
-
-    class DDPoint
-    {
-
-        public float X { get; set; }
-
-        public float Y { get; set; }
     }
 }
