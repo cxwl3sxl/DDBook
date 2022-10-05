@@ -44,7 +44,6 @@
             this.lbPageInfo = new System.Windows.Forms.Label();
             this.btnSaveRect = new System.Windows.Forms.Button();
             this.btnPlay = new System.Windows.Forms.Button();
-            this.btnNewRect = new System.Windows.Forms.Button();
             this.btnNextPage = new System.Windows.Forms.Button();
             this.btnPrePage = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -152,7 +151,6 @@
             this.gbControl.Controls.Add(this.lbPageInfo);
             this.gbControl.Controls.Add(this.btnSaveRect);
             this.gbControl.Controls.Add(this.btnPlay);
-            this.gbControl.Controls.Add(this.btnNewRect);
             this.gbControl.Controls.Add(this.btnNextPage);
             this.gbControl.Controls.Add(this.btnPrePage);
             this.gbControl.Enabled = false;
@@ -195,7 +193,7 @@
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(87, 82);
+            this.btnDelete.Location = new System.Drawing.Point(6, 82);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(75, 23);
             this.btnDelete.TabIndex = 10;
@@ -254,16 +252,6 @@
             this.btnPlay.Text = "播放";
             this.btnPlay.UseVisualStyleBackColor = true;
             this.btnPlay.Click += new System.EventHandler(this.btnPlay_Click);
-            // 
-            // btnNewRect
-            // 
-            this.btnNewRect.Location = new System.Drawing.Point(6, 82);
-            this.btnNewRect.Name = "btnNewRect";
-            this.btnNewRect.Size = new System.Drawing.Size(75, 23);
-            this.btnNewRect.TabIndex = 3;
-            this.btnNewRect.Text = "新区";
-            this.btnNewRect.UseVisualStyleBackColor = true;
-            this.btnNewRect.Click += new System.EventHandler(this.btnNewRect_Click);
             // 
             // btnNextPage
             // 
@@ -380,7 +368,6 @@
         private System.Windows.Forms.GroupBox gbControl;
         private System.Windows.Forms.Button btnNextPage;
         private System.Windows.Forms.Button btnPrePage;
-        private System.Windows.Forms.Button btnNewRect;
         private System.Windows.Forms.Button btnSaveRect;
         private System.Windows.Forms.Button btnPlay;
         private System.Windows.Forms.Label lbPageInfo;

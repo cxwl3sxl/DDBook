@@ -351,6 +351,7 @@ namespace DDBook
                 if (data?.Code == ResultCode.Success)
                 {
                     var mp3 = myPictureBox1.SaveMp3(data.Data);
+                    if (string.IsNullOrWhiteSpace(mp3)) return;
                     _audioFileReader = new AudioFileReader(mp3);
                     _wo.Init(_audioFileReader);
                     btnStop.Enabled = true;
@@ -406,18 +407,13 @@ namespace DDBook
 
         #region 区块操作
 
-        private void btnNewRect_Click(object sender, EventArgs e)
-        {
-            myPictureBox1.NewBlock();
-            ShowInfo("可以在图片上绘制新点读区了");
-        }
-
         private void btnSaveRect_Click(object sender, EventArgs e)
         {
             try
             {
                 myPictureBox1.SaveBlock();
                 ShowSuccess("点读区域保存成功");
+                myPictureBox1.NewBlock();
             }
             catch (Exception ex)
             {

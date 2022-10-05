@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Newtonsoft.Json;
@@ -17,10 +18,9 @@ namespace DDBook
         private int _curX, _curY, _lastX, _lastY;
         private bool _isMouseDown;
         private readonly Pen _pen;
-        private Rectangle _lastDrawRectangle;
         private float _systemDpiX, _systemDpiY;
         private readonly List<DDBlock> _blocks = new List<DDBlock>();
-        private string _lastMp3;
+        private DDBlock _currentBlock;
         private bool _pageSaved;
 
         public event Action<string> OnMessage;
@@ -53,7 +53,8 @@ namespace DDBook
             _lastX = e.X;
             _lastY = e.Y;
 
-            if (_lastDrawRectangle != Rectangle.Empty) Invalidate(_lastDrawRectangle);
+            if (_currentBlock != null && _currentBlock?.Rectangle != Rectangle.Empty)
+                Invalidate(_currentBlock!.Rectangle);
             var x = _curX < _lastX ? _curX : _lastX;
             var y = _curY < _lastY ? _curY : _lastY;
             Invalidate(new Rectangle(x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY)));
@@ -97,6 +98,8 @@ namespace DDBook
                 }
             }
 
+            NewBlock();
+
             Invalidate();
 
             return true;
@@ -129,12 +132,12 @@ namespace DDBook
                 g.DrawRectangle(_pen, block.Rectangle);
             }
 
-            if (_isMouseDown)
+            if (_isMouseDown && _currentBlock != null)
             {
                 var x = _curX < _lastX ? _curX : _lastX;
                 var y = _curY < _lastY ? _curY : _lastY;
-                _lastDrawRectangle = new Rectangle(x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY));
-                g.DrawRectangle(_pen, _lastDrawRectangle);
+                _currentBlock.Rectangle = new Rectangle(x, y, Math.Abs(_curX - _lastX), Math.Abs(_curY - _lastY));
+                g.DrawRectangle(_pen, _currentBlock.Rectangle);
             }
 
             buffer.Render(pe.Graphics);
@@ -147,18 +150,19 @@ namespace DDBook
 
         async void ScreenShotAndOcr()
         {
-            if (_lastDrawRectangle == Rectangle.Empty) return;
+            if (_currentBlock == null) return;
+            if (_currentBlock?.Rectangle == Rectangle.Empty) return;
             OnMessage?.Invoke("正在处理...");
-            using var img = new Bitmap(_lastDrawRectangle.Width, _lastDrawRectangle.Height);
+            using var img = new Bitmap(_currentBlock.Rectangle.Width, _currentBlock.Rectangle.Height);
             using var g = Graphics.FromImage(img);
             using var image = Image.FromFile(_picFile);
             var srcRectangle = new Rectangle(
-                (int)(_lastDrawRectangle.X * image.HorizontalResolution / _systemDpiX),
-                (int)(_lastDrawRectangle.Y * image.VerticalResolution / _systemDpiY),
-                (int)(_lastDrawRectangle.Width * image.HorizontalResolution / _systemDpiX),
-                (int)(_lastDrawRectangle.Height * image.VerticalResolution / _systemDpiY));
+                (int)(_currentBlock.Rectangle.X * image.HorizontalResolution / _systemDpiX),
+                (int)(_currentBlock.Rectangle.Y * image.VerticalResolution / _systemDpiY),
+                (int)(_currentBlock.Rectangle.Width * image.HorizontalResolution / _systemDpiX),
+                (int)(_currentBlock.Rectangle.Height * image.VerticalResolution / _systemDpiY));
             g.DrawImage(image,
-                new Rectangle(0, 0, _lastDrawRectangle.Width, _lastDrawRectangle.Height),
+                new Rectangle(0, 0, _currentBlock.Rectangle.Width, _currentBlock.Rectangle.Height),
                 srcRectangle,
                 GraphicsUnit.Pixel);
             var ocrImage = Path.Combine(_pageDir, "tmp.jpg");
@@ -175,11 +179,12 @@ namespace DDBook
 
         public string SaveMp3(MemoryStream dataData)
         {
-            _lastMp3 = Path.Combine(_pageDir, $"{Guid.NewGuid()}.mp3");
-            using var fs = File.Create(_lastMp3);
+            if (_currentBlock == null) return null;
+            var mp3 = Path.Combine(_pageDir, $"{_currentBlock.Id}.mp3");
+            using var fs = File.Create(mp3);
             dataData.WriteTo(fs);
             fs.Close();
-            return _lastMp3;
+            return mp3;
         }
 
         #endregion
@@ -188,41 +193,26 @@ namespace DDBook
 
         public void NewBlock()
         {
-            _lastMp3 = null;
-            _lastDrawRectangle = Rectangle.Empty;
+            _currentBlock = new DDBlock()
+            {
+                Id = Guid.NewGuid()
+            };
+            _blocks.Add(_currentBlock);
         }
 
         public void SaveBlock()
         {
-            if (_lastDrawRectangle == Rectangle.Empty) return;
-            if (string.IsNullOrWhiteSpace(_lastMp3)) throw new Exception("尚未合成录音，无法保存！");
-            if (!File.Exists(_lastMp3)) throw new Exception("尚未合成录音，无法保存！");
-            var lx = _lastDrawRectangle.X * 1.0f / Width;
-            var ly = _lastDrawRectangle.Y * 1.0f / Height;
-            var rx = (_lastDrawRectangle.X + _lastDrawRectangle.Width) * 1.0f / Width;
-            var ry = (_lastDrawRectangle.Y + _lastDrawRectangle.Height) * 1.0f / Height;
-            _blocks.Add(new DDBlock()
-            {
-                Mp3 = _lastMp3,
-                Rectangle = _lastDrawRectangle,
-                LeftTop = new DDPoint()
-                {
-                    X = lx,
-                    Y = ly
-                },
-                RightTop = new DDPoint()
-                {
-                    X = rx,
-                    Y = ry
-                }
-            });
-            _lastDrawRectangle = Rectangle.Empty;
+            if (_currentBlock == null) return;
+            if (_currentBlock.Rectangle == Rectangle.Empty) return;
+            if (!File.Exists(Path.Combine(_pageDir, $"{_currentBlock.Id}.mp3"))) throw new Exception("尚未合成录音，无法保存！");
         }
 
         public void DeleteBlock()
         {
-            _lastMp3 = null;
-            _lastDrawRectangle = Rectangle.Empty;
+            if (_currentBlock == null) return;
+            var target = _blocks.FirstOrDefault(a => a.Id == _currentBlock.Id);
+            if (target == null) return;
+            _blocks.Remove(target);
         }
 
         public void SavePage()
@@ -236,17 +226,18 @@ namespace DDBook
             sb.AppendLine("#");
             foreach (var block in _blocks)
             {
+                var lx = block.Rectangle.X * 1.0f / Width;
+                var ly = block.Rectangle.Y * 1.0f / Height;
+                var rx = (block.Rectangle.X + block.Rectangle.Width) * 1.0f / Width;
+                var ry = (block.Rectangle.Y + block.Rectangle.Height) * 1.0f / Height;
+
                 sb.AppendLine(
-                    $"{FormatPoint(block.LeftTop.X)},{FormatPoint(block.LeftTop.Y)},{FormatPoint(block.RightTop.X)},{FormatPoint(block.RightTop.Y)}");
-                var targetMp3 = Path.Combine(Path.GetDirectoryName(block.Mp3)!, $"{index}.mp3");
-                if (File.Exists(targetMp3)) File.Delete(targetMp3);
-                File.Move(block.Mp3, targetMp3);
-                block.Mp3 = targetMp3;
+                    $"{FormatPoint(lx)},{FormatPoint(ly)},{FormatPoint(rx)},{FormatPoint(ry)}");
                 index++;
             }
 
-            File.WriteAllText(Path.Combine(_pageDir, "XY.txt"), sb.ToString());
-            File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(_blocks));
+            var blocks = _blocks.Where(a => a.Rectangle != Rectangle.Empty).ToArray();
+            File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(blocks));
             _pageSaved = true;
         }
 
