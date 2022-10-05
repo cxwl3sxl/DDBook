@@ -396,7 +396,7 @@ namespace DDBook
             }
 
             cbVoiceList.SelectedItem =
-                _choosedVoice = voices.FirstOrDefault(a => a.ShortName == "en-US-MichelleNeural");
+                _choosedVoice = voices.FirstOrDefault(a => a.ShortName == "en-GB-LibbyNeural");
         }
 
         private void cbVoiceList_SelectedIndexChanged(object sender, EventArgs e)
