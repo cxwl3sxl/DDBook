@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 
@@ -19,8 +17,8 @@ namespace DDBook
         private bool _isMouseDown;
         private readonly Pen _pen;
         private float _systemDpiX, _systemDpiY;
-        private readonly List<DDBlock> _blocks = new List<DDBlock>();
-        private DDBlock _currentBlock;
+        private readonly PageInfo _pageInfo = new PageInfo();
+        private DdBlock _currentBlock;
         private bool _pageSaved;
 
         public event Action<string> OnMessage;
@@ -86,15 +84,17 @@ namespace DDBook
             using var image = Image.FromFile(_picFile);
             Width = (int)(image.Width * _systemDpiX / image.HorizontalResolution);
             Height = (int)(image.Height * _systemDpiY / image.VerticalResolution);
+            _pageInfo.Width = Width;
+            _pageInfo.Height = Height;
 
-            _blocks.Clear();
+            _pageInfo.Blocks.Clear();
             var xyFile = Path.Combine(dir, "XY.json");
             if (File.Exists(xyFile))
             {
-                var blocks = JsonConvert.DeserializeObject<DDBlock[]>(File.ReadAllText(xyFile));
-                if (blocks != null)
+                var pageInfo = JsonConvert.DeserializeObject<PageInfo>(File.ReadAllText(xyFile));
+                if (pageInfo != null)
                 {
-                    _blocks.AddRange(blocks);
+                    _pageInfo.Blocks.AddRange(pageInfo.Blocks);
                 }
             }
 
@@ -118,6 +118,7 @@ namespace DDBook
         {
             if (_picFile == null) return;
             if (!File.Exists(_picFile)) return;
+            if (_pageInfo == null) return;
             var gtx = BufferedGraphicsManager.Current;
             var buffer = gtx.Allocate(pe.Graphics, new Rectangle(0, 0, Width, Height));
             using var g = buffer.Graphics;
@@ -127,7 +128,7 @@ namespace DDBook
             using var image = Image.FromFile(_picFile);
             g.DrawImage(image, new Point(0, 0));
 
-            foreach (var block in _blocks)
+            foreach (var block in _pageInfo.Blocks)
             {
                 g.DrawRectangle(_pen, block.Rectangle);
             }
@@ -153,7 +154,7 @@ namespace DDBook
             if (_currentBlock == null) return;
             if (_currentBlock?.Rectangle == Rectangle.Empty) return;
             OnMessage?.Invoke("正在处理...");
-            using var img = new Bitmap(_currentBlock.Rectangle.Width, _currentBlock.Rectangle.Height);
+            using var img = new Bitmap(_currentBlock!.Rectangle.Width, _currentBlock.Rectangle.Height);
             using var g = Graphics.FromImage(img);
             using var image = Image.FromFile(_picFile);
             var srcRectangle = new Rectangle(
@@ -193,11 +194,11 @@ namespace DDBook
 
         public void NewBlock()
         {
-            _currentBlock = new DDBlock()
+            _currentBlock = new DdBlock()
             {
                 Id = Guid.NewGuid()
             };
-            _blocks.Add(_currentBlock);
+            _pageInfo.Blocks.Add(_currentBlock);
         }
 
         public void SaveBlock()
@@ -210,9 +211,9 @@ namespace DDBook
         public void DeleteBlock()
         {
             if (_currentBlock == null) return;
-            var target = _blocks.FirstOrDefault(a => a.Id == _currentBlock.Id);
+            var target = _pageInfo.Blocks.FirstOrDefault(a => a.Id == _currentBlock.Id);
             if (target == null) return;
-            _blocks.Remove(target);
+            _pageInfo.Blocks.Remove(target);
         }
 
         public void SavePage()
@@ -221,30 +222,34 @@ namespace DDBook
             if (_pageDir == null) return;
             if (!Directory.Exists(_pageDir)) return;
             SaveBlock();
-            var sb = new StringBuilder();
-            var index = 1;
-            sb.AppendLine("#");
-            foreach (var block in _blocks)
-            {
-                var lx = block.Rectangle.X * 1.0f / Width;
-                var ly = block.Rectangle.Y * 1.0f / Height;
-                var rx = (block.Rectangle.X + block.Rectangle.Width) * 1.0f / Width;
-                var ry = (block.Rectangle.Y + block.Rectangle.Height) * 1.0f / Height;
+            //var sb = new StringBuilder();
+            //var index = 1;
+            //sb.AppendLine("#");
+            //foreach (var block in _pageInfo.Blocks)
+            //{
+            //    var lx = block.Rectangle.X * 1.0f / Width;
+            //    var ly = block.Rectangle.Y * 1.0f / Height;
+            //    var rx = (block.Rectangle.X + block.Rectangle.Width) * 1.0f / Width;
+            //    var ry = (block.Rectangle.Y + block.Rectangle.Height) * 1.0f / Height;
 
-                sb.AppendLine(
-                    $"{FormatPoint(lx)},{FormatPoint(ly)},{FormatPoint(rx)},{FormatPoint(ry)}");
-                index++;
+            //    sb.AppendLine(
+            //        $"{FormatPoint(lx)},{FormatPoint(ly)},{FormatPoint(rx)},{FormatPoint(ry)}");
+            //    index++;
+            //}
+            var emptyBlocks = _pageInfo.Blocks.Where(a => a.Rectangle == Rectangle.Empty).ToArray();
+            foreach (var block in emptyBlocks)
+            {
+                _pageInfo.Blocks.Remove(block);
             }
 
-            var blocks = _blocks.Where(a => a.Rectangle != Rectangle.Empty).ToArray();
-            File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(blocks));
+            File.WriteAllText(Path.Combine(_pageDir, "XY.json"), JsonConvert.SerializeObject(_pageInfo));
             _pageSaved = true;
         }
 
-        string FormatPoint(float point)
-        {
-            return $".{$"{point:F3}".Split('.')[1]}";
-        }
+        //string FormatPoint(float point)
+        //{
+        //    return $".{$"{point:F3}".Split('.')[1]}";
+        //}
 
         #endregion
 

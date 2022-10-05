@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace DDBook
 {
-    class DDBlock
+    class DdBlock
     {
 
         public Rectangle Rectangle { get; set; }

@@ -30,11 +30,14 @@
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pbOcr = new System.Windows.Forms.PictureBox();
             this.tbOcrResult = new System.Windows.Forms.TextBox();
             this.gbControl = new System.Windows.Forms.GroupBox();
+            this.tbBookName = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.btnExport = new System.Windows.Forms.Button();
             this.btnSetAsCover = new System.Windows.Forms.Button();
             this.btnSavePage = new System.Windows.Forms.Button();
@@ -50,9 +53,6 @@
             this.lbMessage = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
-            this.label1 = new System.Windows.Forms.Label();
-            this.tbBookName = new System.Windows.Forms.TextBox();
-            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -87,6 +87,13 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(649, 594);
             this.panel1.TabIndex = 1;
+            // 
+            // myPictureBox1
+            // 
+            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
+            this.myPictureBox1.Name = "myPictureBox1";
+            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
+            this.myPictureBox1.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -160,6 +167,23 @@
             this.gbControl.TabIndex = 4;
             this.gbControl.TabStop = false;
             this.gbControl.Text = "控制区";
+            // 
+            // tbBookName
+            // 
+            this.tbBookName.Location = new System.Drawing.Point(77, 111);
+            this.tbBookName.Name = "tbBookName";
+            this.tbBookName.Size = new System.Drawing.Size(228, 21);
+            this.tbBookName.TabIndex = 15;
+            this.tbBookName.TextChanged += new System.EventHandler(this.tbBookName_TextChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 115);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(65, 12);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "教材名称：";
             // 
             // btnExport
             // 
@@ -294,7 +318,7 @@
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(837, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(970, 17);
             this.toolStripStatusLabel1.Spring = true;
             // 
             // toolStripProgressBar1
@@ -303,30 +327,6 @@
             this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
             this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.toolStripProgressBar1.Visible = false;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 115);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(65, 12);
-            this.label1.TabIndex = 14;
-            this.label1.Text = "教材名称：";
-            // 
-            // tbBookName
-            // 
-            this.tbBookName.Location = new System.Drawing.Point(77, 111);
-            this.tbBookName.Name = "tbBookName";
-            this.tbBookName.Size = new System.Drawing.Size(228, 21);
-            this.tbBookName.TabIndex = 15;
-            this.tbBookName.TextChanged += new System.EventHandler(this.tbBookName_TextChanged);
-            // 
-            // myPictureBox1
-            // 
-            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
-            this.myPictureBox1.Name = "myPictureBox1";
-            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
-            this.myPictureBox1.TabIndex = 0;
             // 
             // Form1
             // 

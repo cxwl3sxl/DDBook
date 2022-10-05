@@ -130,7 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DDBlock.cs" />
-    <Compile Include="DDPoint.cs" />
+    <Compile Include="PageInfo.cs" />
     <Compile Include="EdgeTTS\EdgeTTS.cs" />
     <Compile Include="EdgeTTS\Result.cs" />
     <Compile Include="EdgeTTS\SessionState.cs" />

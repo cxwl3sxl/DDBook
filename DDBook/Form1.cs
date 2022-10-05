@@ -12,6 +12,7 @@ using NAudio.Wave;
 using Newtonsoft.Json;
 using PdfiumViewer;
 using Encoder = System.Drawing.Imaging.Encoder;
+// ReSharper disable All
 
 namespace DDBook
 {
@@ -454,7 +455,7 @@ namespace DDBook
                 return;
             }
 
-            _currentProject.CoverImgPage = _currentProject.CurrentProcessPage;
+            _currentProject.CoverImgPage = _currentProject.CurrentProcessPage + 1;
 
             ShowSuccess("封面设置成功！");
         }
@@ -473,8 +474,9 @@ namespace DDBook
                 tbBookName.Enabled = false;
                 ShowInfo("正在导出");
 
-                using var zip = new ZipOutputStream(File.Create(Path.Combine(_currentProject.WorkingDir,
-                    $"{_currentProject.BookName}.ddt")));
+                var zipFile = Path.Combine(_currentProject.WorkingDir,
+                    $"{_currentProject.BookName}.ddt");
+                using var zip = new ZipOutputStream(File.Create(zipFile));
                 var bookCover = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.CoverImgPage}", "pic.jpg");
                 var newBookCover = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.BookName}.jpg");
                 if (File.Exists(bookCover))
@@ -484,6 +486,11 @@ namespace DDBook
                 }
 
                 ShowInfo("正在导出[正在写入封面]");
+                if (!File.Exists(newBookCover))
+                {
+                    if (MessageBox.Show("当前教材尚未设置封面，是否继续？", "温馨提示", MessageBoxButtons.YesNo) == DialogResult.No) return;
+                }
+
                 WriteFile(zip, newBookCover);
 
                 var dirInfo = new StringBuilder();
@@ -495,17 +502,44 @@ namespace DDBook
 
                     ShowInfo($"正在导出[正在写入第{i}页]");
                     WriteFile(zip, Path.Combine(pageDir, "pic.jpg"));
-                    WriteFile(zip, Path.Combine(pageDir, "XY.txt"));
 
-                    var mp3s = Directory.GetFiles(pageDir, "*.mp3");
-                    foreach (var mp3 in mp3s)
+                    var pageInfoFile = Path.Combine(pageDir, "XY.json");
+                    var blocks = new StringBuilder();
+                    blocks.AppendLine("#");
+
+                    if (File.Exists(pageInfoFile))
                     {
-                        var name = Path.GetFileNameWithoutExtension(mp3);
-                        if (int.TryParse(name, out _))
+                        var pageInfo = JsonConvert.DeserializeObject<PageInfo>(File.ReadAllText(pageInfoFile));
+                        if (pageInfo != null)
                         {
-                            WriteFile(zip, mp3);
+                            var index = 1;
+                            foreach (var block in pageInfo.Blocks)
+                            {
+                                var mp3 = Path.Combine(pageDir, $"{block.Id}.mp3");
+                                if (!File.Exists(mp3)) continue;
+                                var lx = block.Rectangle.X * 1.0f / pageInfo.Width;
+                                var ly = block.Rectangle.Y * 1.0f / pageInfo.Height;
+                                var rx = (block.Rectangle.X + block.Rectangle.Width) * 1.0f / pageInfo.Width;
+                                var ry = (block.Rectangle.Y + block.Rectangle.Height) * 1.0f / pageInfo.Height;
+
+                                blocks.AppendLine(
+                                    $"{FormatPoint(lx)},{FormatPoint(ly)},{FormatPoint(rx)},{FormatPoint(ry)}");
+
+                                WriteFile(zip,
+                                    mp3,
+                                    Path
+                                        .Combine(pageDir, $"{index}.mp3")
+                                        .Replace(_currentProject.WorkingDir, _currentProject.BookName));
+
+                                index++;
+                            }
                         }
                     }
+
+                    var xyTxt = Path.Combine(pageDir, "XY.txt");
+                    File.WriteAllText(xyTxt, blocks.ToString());
+
+                    WriteFile(zip, xyTxt);
 
                     dirInfo.AppendLine($"{i}");
                 }
@@ -515,6 +549,21 @@ namespace DDBook
                 File.WriteAllText(dirFile, dirInfo.ToString());
                 WriteFile(zip, dirFile);
                 zip.Close();
+                zip.Dispose();
+
+                var targetFile = Path.Combine(Path.GetDirectoryName(_projFile), Path.GetFileName(zipFile));
+                if (File.Exists(targetFile))
+                {
+                    if (MessageBox.Show("指定的课本已经存在，是否覆盖？", "询问", MessageBoxButtons.YesNo) != DialogResult.Yes)
+                    {
+                        ShowInfo("导出课本已经取消");
+                        return;
+                    }
+
+                    File.Delete(targetFile);
+                }
+
+                File.Move(zipFile,targetFile );
 
                 ShowSuccess("教材写入成功");
             }
@@ -525,11 +574,17 @@ namespace DDBook
             }
         }
 
-        void WriteFile(ZipOutputStream zip, string file)
+        string FormatPoint(float point)
+        {
+            return $".{$"{point:F3}".Split('.')[1]}";
+        }
+
+        void WriteFile(ZipOutputStream zip, string file, string fileInZip = null)
         {
             if (!File.Exists(file)) return;
             var buffer = new byte[4096]; //缓冲区大小
-            var entry = new ZipEntry(file.Replace(_currentProject.WorkingDir, _currentProject.BookName))
+            fileInZip ??= file.Replace(_currentProject.WorkingDir, _currentProject.BookName);
+            var entry = new ZipEntry(fileInZip)
             {
                 DateTime = DateTime.Now
             };
