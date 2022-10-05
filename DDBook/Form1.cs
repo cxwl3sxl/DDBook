@@ -3,12 +3,15 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DDBook.EdgeTTS;
+using ICSharpCode.SharpZipLib.Zip;
 using NAudio.Wave;
 using Newtonsoft.Json;
 using PdfiumViewer;
+using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace DDBook
 {
@@ -67,22 +70,32 @@ namespace DDBook
             }
 
             _currentProject = project;
+            tbBookName.Text = _currentProject.BookName;
 
             ShowInfo("正在生成页面数据，请稍后...");
-            var total = await CheckImage(project.Pdf, project.WorkingDir);
+            SetBusy(true);
 
-            if (project.Total != 0 && project.Total != total)
+            try
             {
-                ShowError("检测到PDF文件页数和上次使用的不一致.");
-                _currentProject = null;
-                return;
+                var total = await CheckImage(project.Pdf, project.WorkingDir);
+
+                if (project.Total != 0 && project.Total != total)
+                {
+                    ShowError("检测到PDF文件页数和上次使用的不一致.");
+                    _currentProject = null;
+                    return;
+                }
+
+                _currentProject.Total = total;
+
+                ShowCurrentPage();
+
+                gbControl.Enabled = true;
             }
-
-            _currentProject.Total = total;
-
-            ShowCurrentPage();
-
-            gbControl.Enabled = true;
+            finally
+            {
+                SetBusy(false);
+            }
         }
 
         void ShowCurrentPage()
@@ -222,7 +235,7 @@ namespace DDBook
                     var targetPic = Path.Combine(workingDir, $"{i + 1}", "pic.jpg");
                     if (File.Exists(targetPic)) continue;
 
-                    var dir = Path.GetDirectoryName(targetPic);
+                    var dir = Path.GetDirectoryName(targetPic)!;
                     if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
                     var dpi = 300;
@@ -268,6 +281,20 @@ namespace DDBook
         void ShowInfo(string msg)
         {
             ShowMessage(msg, Color.Black);
+        }
+
+        void SetBusy(bool isBusy)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() =>
+                {
+                    SetBusy(isBusy);
+                }));
+                return;
+            }
+
+            toolStripProgressBar1.Visible = isBusy;
         }
 
         #endregion
@@ -317,6 +344,7 @@ namespace DDBook
         {
             try
             {
+                SetBusy(true);
                 btnPlay.Enabled = false;
                 var data = await _tts.SynthesisAsync(tbOcrResult.Text, ShowInfo, _choosedVoice.ShortName);
                 if (data?.Code == ResultCode.Success)
@@ -338,6 +366,7 @@ namespace DDBook
             }
             finally
             {
+                SetBusy(false);
                 btnPlay.Enabled = true;
             }
         }
@@ -421,28 +450,112 @@ namespace DDBook
 
         private void btnSetAsCover_Click(object sender, EventArgs e)
         {
-            var pic = myPictureBox1.GetPic();
-            if (string.IsNullOrWhiteSpace(pic))
+            var img = myPictureBox1.GetPic();
+            if (string.IsNullOrWhiteSpace(img))
             {
-                ShowError("当前没有选中任何图片！");
+                ShowError("当前未选中任何页");
                 return;
             }
 
             var myBook = Path.Combine(_currentProject.WorkingDir, "MyBook.jpg");
             if (File.Exists(myBook)) File.Delete(myBook);
 
-            File.Copy(pic, myBook);
+            File.Copy(img, myBook);
 
             ShowSuccess("封面设置成功！");
         }
 
         private void btnExport_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(_currentProject.BookName))
+            {
+                ShowError("请设置教材名称");
+                return;
+            }
 
+            try
+            {
+                SetBusy(true);
+                tbBookName.Enabled = false;
+                ShowInfo("正在导出");
+
+                using var zip = new ZipOutputStream(File.Create(Path.Combine(_currentProject.WorkingDir,
+                    $"{_currentProject.BookName}.ddt")));
+                var bookCover = Path.Combine(_currentProject.WorkingDir, "MyBook.jpg");
+                var newBookCover = Path.Combine(_currentProject.WorkingDir, $"{_currentProject.BookName}.jpg");
+                if (File.Exists(bookCover))
+                {
+                    File.Move(bookCover, newBookCover);
+                }
+
+                ShowInfo("正在导出[正在写入封面]");
+                WriteFile(zip, newBookCover);
+
+                var dirInfo = new StringBuilder();
+
+                for (var i = 1;; i++)
+                {
+                    var pageDir = Path.Combine(_currentProject.WorkingDir, $"{i}");
+                    if (!Directory.Exists(pageDir)) break;
+
+                    ShowInfo($"正在导出[正在写入第{i}页]");
+                    WriteFile(zip, Path.Combine(pageDir, "pic.jpg"));
+                    WriteFile(zip, Path.Combine(pageDir, "XY.txt"));
+
+                    var mp3s = Directory.GetFiles(pageDir, "*.mp3");
+                    foreach (var mp3 in mp3s)
+                    {
+                        var name = Path.GetFileNameWithoutExtension(mp3);
+                        if (int.TryParse(name, out _))
+                        {
+                            WriteFile(zip, mp3);
+                        }
+                    }
+
+                    dirInfo.AppendLine($"{i}");
+                }
+
+                ShowInfo("正在导出[正在写入目录信息]");
+                var dirFile = Path.Combine(_currentProject.WorkingDir, "DirList.txt");
+                File.WriteAllText(dirFile, dirInfo.ToString());
+                WriteFile(zip, dirFile);
+                zip.Close();
+
+                ShowSuccess("教材写入成功");
+            }
+            finally
+            {
+                SetBusy(false);
+                tbBookName.Enabled = true;
+            }
         }
+
+        void WriteFile(ZipOutputStream zip, string file)
+        {
+            if (!File.Exists(file)) return;
+            var buffer = new byte[4096]; //缓冲区大小
+            var entry = new ZipEntry(file.Replace(_currentProject.WorkingDir, _currentProject.BookName))
+            {
+                DateTime = DateTime.Now
+            };
+            zip.PutNextEntry(entry);
+            using var fs = File.OpenRead(file);
+            int sourceBytes;
+            do
+            {
+                sourceBytes = fs.Read(buffer, 0, buffer.Length);
+                zip.Write(buffer, 0, sourceBytes);
+            } while (sourceBytes > 0);
+
+            fs.Close();
+        }
+
 
         #endregion
 
-
+        private void tbBookName_TextChanged(object sender, EventArgs e)
+        {
+            _currentProject.BookName = tbBookName.Text;
+        }
     }
 }

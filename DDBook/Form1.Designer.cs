@@ -30,11 +30,14 @@
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.myPictureBox1 = new DDBook.MyPictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pbOcr = new System.Windows.Forms.PictureBox();
             this.tbOcrResult = new System.Windows.Forms.TextBox();
             this.gbControl = new System.Windows.Forms.GroupBox();
+            this.btnExport = new System.Windows.Forms.Button();
+            this.btnSetAsCover = new System.Windows.Forms.Button();
             this.btnSavePage = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
@@ -47,9 +50,10 @@
             this.btnPrePage = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lbMessage = new System.Windows.Forms.ToolStripStatusLabel();
-            this.btnSetAsCover = new System.Windows.Forms.Button();
-            this.btnExport = new System.Windows.Forms.Button();
-            this.myPictureBox1 = new DDBook.MyPictureBox();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
+            this.label1 = new System.Windows.Forms.Label();
+            this.tbBookName = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -84,6 +88,13 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(649, 594);
             this.panel1.TabIndex = 1;
+            // 
+            // myPictureBox1
+            // 
+            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
+            this.myPictureBox1.Name = "myPictureBox1";
+            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
+            this.myPictureBox1.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -137,6 +148,8 @@
             // gbControl
             // 
             this.gbControl.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbControl.Controls.Add(this.tbBookName);
+            this.gbControl.Controls.Add(this.label1);
             this.gbControl.Controls.Add(this.btnExport);
             this.gbControl.Controls.Add(this.btnSetAsCover);
             this.gbControl.Controls.Add(this.btnSavePage);
@@ -156,6 +169,26 @@
             this.gbControl.TabIndex = 4;
             this.gbControl.TabStop = false;
             this.gbControl.Text = "控制区";
+            // 
+            // btnExport
+            // 
+            this.btnExport.Location = new System.Drawing.Point(392, 110);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(75, 23);
+            this.btnExport.TabIndex = 13;
+            this.btnExport.Text = "导出教材";
+            this.btnExport.UseVisualStyleBackColor = true;
+            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
+            // 
+            // btnSetAsCover
+            // 
+            this.btnSetAsCover.Location = new System.Drawing.Point(311, 110);
+            this.btnSetAsCover.Name = "btnSetAsCover";
+            this.btnSetAsCover.Size = new System.Drawing.Size(75, 23);
+            this.btnSetAsCover.TabIndex = 12;
+            this.btnSetAsCover.Text = "设为封面";
+            this.btnSetAsCover.UseVisualStyleBackColor = true;
+            this.btnSetAsCover.Click += new System.EventHandler(this.btnSetAsCover_Click);
             // 
             // btnSavePage
             // 
@@ -262,7 +295,9 @@
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.lbMessage});
+            this.lbMessage,
+            this.toolStripStatusLabel1,
+            this.toolStripProgressBar1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 629);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1159, 22);
@@ -275,32 +310,33 @@
             this.lbMessage.Size = new System.Drawing.Size(174, 17);
             this.lbMessage.Text = "拖拽项目文件或者PDF文件开始";
             // 
-            // btnSetAsCover
+            // toolStripStatusLabel1
             // 
-            this.btnSetAsCover.Location = new System.Drawing.Point(6, 110);
-            this.btnSetAsCover.Name = "btnSetAsCover";
-            this.btnSetAsCover.Size = new System.Drawing.Size(75, 23);
-            this.btnSetAsCover.TabIndex = 12;
-            this.btnSetAsCover.Text = "设为封面";
-            this.btnSetAsCover.UseVisualStyleBackColor = true;
-            this.btnSetAsCover.Click += new System.EventHandler(this.btnSetAsCover_Click);
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(868, 17);
+            this.toolStripStatusLabel1.Spring = true;
             // 
-            // btnExport
+            // toolStripProgressBar1
             // 
-            this.btnExport.Location = new System.Drawing.Point(87, 110);
-            this.btnExport.Name = "btnExport";
-            this.btnExport.Size = new System.Drawing.Size(75, 23);
-            this.btnExport.TabIndex = 13;
-            this.btnExport.Text = "导出教材";
-            this.btnExport.UseVisualStyleBackColor = true;
-            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
+            this.toolStripProgressBar1.Name = "toolStripProgressBar1";
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
             // 
-            // myPictureBox1
+            // label1
             // 
-            this.myPictureBox1.Location = new System.Drawing.Point(3, 3);
-            this.myPictureBox1.Name = "myPictureBox1";
-            this.myPictureBox1.Size = new System.Drawing.Size(643, 584);
-            this.myPictureBox1.TabIndex = 0;
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 115);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(65, 12);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "教材名称：";
+            // 
+            // tbBookName
+            // 
+            this.tbBookName.Location = new System.Drawing.Point(77, 111);
+            this.tbBookName.Name = "tbBookName";
+            this.tbBookName.Size = new System.Drawing.Size(228, 21);
+            this.tbBookName.TabIndex = 15;
+            this.tbBookName.TextChanged += new System.EventHandler(this.tbBookName_TextChanged);
             // 
             // Form1
             // 
@@ -328,6 +364,7 @@
             this.splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pbOcr)).EndInit();
             this.gbControl.ResumeLayout(false);
+            this.gbControl.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -358,6 +395,10 @@
         private System.Windows.Forms.ToolStripStatusLabel lbMessage;
         private System.Windows.Forms.Button btnSetAsCover;
         private System.Windows.Forms.Button btnExport;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.TextBox tbBookName;
+        private System.Windows.Forms.Label label1;
     }
 }
 
